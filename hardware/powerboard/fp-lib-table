@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "powerboard")(type "KiCad")(uri "${KIPRJMOD}/powerboard.pretty")(options "")(descr "Projektbibliothek"))
+)
