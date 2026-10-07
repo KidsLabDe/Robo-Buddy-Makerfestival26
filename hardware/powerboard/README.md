@@ -2,7 +2,22 @@
 
 Trägerplatine, die den Robo-Buddy akkubetrieben macht. Anforderungen und Begründungen: `POWERBOARD-HANDOFF.md` im Repo-Hauptordner. ESP-Board: `../esp32-c6-zero/`.
 
-Stand: **Schaltplan fertig, ERC ohne Meldungen. Layout noch nicht begonnen.**
+Stand: **Schaltplan fertig, ERC ohne Meldungen. Platine nur vorläufig platziert, noch nicht geroutet.**
+
+## Vorläufige Platine
+
+`powerboard.kicad_pcb` erzeugt `tools/gen_pcb.py`. Das Skript legt die Kontur (45 × 30 mm, Platzhalter) und alle Footprints mit Netzen an, platziert sie grob und füllt eine GND-Fläche auf der Unterseite. Leiterbahnen gibt es noch keine. Die Platine dient nur dazu, zu sehen, ob alles passt. **Nicht bestellen.**
+
+| Ansicht | Datei |
+|---|---|
+| 2D oben / unten | `ansichten/2d_oben.png`, `ansichten/2d_unten.png` |
+| 3D oben / unten / schräg | `ansichten/3d_oben.png`, `ansichten/3d_unten.png`, `ansichten/3d_schraeg.png` |
+
+Hinweise:
+- Links: USB-C des ESP, Lade-LED. Oben: Display-Buchse, Öffnung zur Kante. Rechts: Servos. Unten: Akku-Buchse und Schalter.
+- Der Schalter sitzt vorerst an der Unterkante, weil links der ESP die ganze Kante belegt. Die endgültige Lage kommt vom Gehäuse.
+- Die SMD-Teile für Lader, Schutz und Power Path liegen unter dem gesteckten ESP. DRC meldet deshalb Courtyard-Überlappungen mit U4, das ist gewollt.
+- In 3D fehlt das ESP-Modul selbst, weil es dafür kein 3D-Modell gibt. Zu sehen sind nur die beiden Buchsenleisten. Auch die JST-Buchse hat kein Modell.
 
 ## Dateien
 
@@ -11,6 +26,7 @@ Stand: **Schaltplan fertig, ERC ohne Meldungen. Layout noch nicht begonnen.**
 | `powerboard.kicad_sch` | Schaltplan, **erzeugt** von `tools/gen_sch.py` |
 | `powerboard.kicad_sym` | Projektsymbole FS8205A und ESP32-C6-Zero, erzeugt von `tools/gen_lib.py` |
 | `powerboard.pretty/` | Footprint für den gesteckten C6-Zero, erzeugt von `tools/gen_lib.py` |
+| `powerboard.kicad_pcb` | vorläufige Platine, erzeugt von `tools/gen_pcb.py` |
 | `tools/` | Generatoren |
 
 Der Schaltplan entsteht aus der Bauteilliste in `tools/gen_sch.py`. Jeder Pin hängt über ein Netz-Label an seinem Netz. Änderungen also dort machen und neu erzeugen, nicht im Schaltplan-Editor:

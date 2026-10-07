@@ -136,7 +136,7 @@ part('J4', 'Connector:Conn_01x07_Socket', 'DISPLAY GC9A01', 'Connector_PinSocket
 
 # --- Test points, holes --------------------------------------------------
 for i, net in enumerate(['BAT+', 'GND', 'VSYS', 'VSERVO', '3V3']):
-    part(f'TP{i + 1}', 'Connector:TestPoint', f'TP_{net}', 'TestPoint:TestPoint_Pad_D1.5mm', '',
+    part(f'TP{i + 1}', 'Connector:TestPoint', f'TP_{net}', 'TestPoint:TestPoint_Pad_D1.0mm', '',
          {'1': net}, p(84 + i * 5, 66), bom=False)
 for i in range(2):
     part(f'H{i + 1}', 'Mechanical:MountingHole', 'M2', 'MountingHole:MountingHole_2.2mm_M2', '',

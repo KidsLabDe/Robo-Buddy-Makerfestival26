@@ -165,6 +165,12 @@ def write_footprint():
                   [Sym('fill'), [Sym('thermal_gap'), 0.5], [Sym('thermal_bridge_width'), 0.5]],
                   [Sym('polygon'), [Sym('pts'), [Sym('xy'), -7.4, ay1], [Sym('xy'), 7.4, ay1],
                                     [Sym('xy'), 7.4, ay2], [Sym('xy'), -7.4, ay2]]]])
+    # 3D: the two sockets (no model of the module itself exists)
+    for x in (xl, xr):
+        items.append([Sym('model'), '${KICAD10_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/'
+                                    'PinSocket_1x09_P2.54mm_Vertical.step',
+                      [Sym('offset'), [Sym('xyz'), round(x, 3), round(-y0, 3), 0]],
+                      [Sym('scale'), [Sym('xyz'), 1, 1, 1]], [Sym('rotate'), [Sym('xyz'), 0, 0, 0]]])
     d = os.path.join(PROJ, 'powerboard.pretty')
     os.makedirs(d, exist_ok=True)
     with open(os.path.join(d, 'Waveshare_ESP32-C6-Zero_Socket.kicad_mod'), 'w', encoding='utf-8') as f:
