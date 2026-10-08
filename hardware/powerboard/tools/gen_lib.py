@@ -66,7 +66,22 @@ def fs8205a():
                   (-5.08, 5.08, 5.08, -5.08), pins)
 
 
-LEFT = ['5V', 'GND', '3V3', 'GPIO0', 'GPIO1', 'GPIO2', 'GPIO3', 'GPIO4', 'GPIO5']
+def tps61023():
+    pins = [
+        pin('power_in', '3', 'VIN', -10.16, 2.54, 0),
+        pin('input', '2', 'EN', -10.16, -2.54, 0),
+        pin('passive', '5', 'SW', 10.16, 2.54, 180),
+        pin('power_out', '6', 'VOUT', 10.16, 0, 180),
+        pin('input', '1', 'FB', 10.16, -2.54, 180),
+        pin('power_in', '4', 'GND', 0, -7.62, 90),
+    ]
+    return symbol('TPS61023', 'U', 'Package_TO_SOT_SMD:SOT-563', 'https://www.ti.com/lit/gpn/tps61023',
+                  'Synchroner Boost 3,7 A Valley-Limit, echte Trennung VIN/VOUT bei EN low (TI). '
+                  'Pinout laut Datenblatt: 1 FB, 2 EN, 3 VIN, 4 GND, 5 SW, 6 VOUT',
+                  (-7.62, 5.08, 7.62, -5.08), pins)
+
+
+LEFT = ['5V','GND', '3V3', 'GPIO0', 'GPIO1', 'GPIO2', 'GPIO3', 'GPIO4', 'GPIO5']
 RIGHT = ['TX/GPIO16', 'RX/GPIO17', 'GPIO14', 'GPIO15', 'GPIO18', 'GPIO19', 'GPIO20', 'GPIO21', 'GPIO22']
 KIND = {'5V': 'power_in', 'GND': 'power_in', '3V3': 'power_out'}
 
@@ -86,7 +101,7 @@ def esp():
 
 def write_symbols():
     libtree = [Sym('kicad_symbol_lib'), [Sym('version'), 20231120], [Sym('generator'), 'gen_lib.py'],
-               [Sym('generator_version'), '1'], fs8205a(), esp()]
+               [Sym('generator_version'), '1'], fs8205a(), tps61023(), esp()]
     with open(os.path.join(PROJ, 'powerboard.kicad_sym'), 'w', encoding='utf-8') as f:
         f.write(dump(libtree) + '\n')
 
@@ -149,7 +164,8 @@ def write_footprint():
     for i in range(18):
         x = xl if i < 9 else xr
         y = y0 + (i % 9) * PITCH
-        shape = Sym('rect') if i == 0 else Sym('circle')
+        shape = Sym('circle')   # round even for pin 1: the board places this part at 126.5 deg, and
+        # Freerouting only gets into non-round pads at multiples of 45 deg. Pin 1 is marked on silk.
         items.append([Sym('pad'), str(i + 1), Sym('thru_hole'), shape, [Sym('at'), round(x, 3), round(y, 3)],
                       [Sym('size'), 1.7, 1.7], [Sym('drill'), 1.0], [Sym('layers'), '*.Cu', '*.Mask'],
                       [Sym('remove_unused_layers'), Sym('no')], [Sym('uuid'), uid('pad', i)]])
@@ -177,6 +193,132 @@ def write_footprint():
         f.write(dump(items) + '\n')
 
 
+def write_kelvin():
+    """1206 shunt with Kelvin sense pads (net tie 1-2 and 3-4).
+
+    Force pads 1 and 4 are the normal 1206 pads. The sense pads 2 and 3 sit
+    beside the inner corners, 0.175 mm away, joined to their force pad by a
+    copper bridge inside the footprint (allowed by the net tie). Their traces
+    leave sideways without touching the force copper, and the autorouter sees
+    two separate pads. Matches the pin numbers of the Device:R_Shunt symbol."""
+    name = 'R_1206_3216Metric_Kelvin'
+    items = [Sym('footprint'), name,
+             [Sym('version'), 20240108], [Sym('generator'), 'gen_lib.py'], [Sym('generator_version'), '1'],
+             [Sym('layer'), 'F.Cu'],
+             [Sym('descr'), '1206 Shunt mit Kelvin-Messpads, Pads 1/4 Strom, 2/3 Messung'],
+             [Sym('tags'), 'resistor shunt kelvin 1206'],
+             fptext('Reference', 'REF**', 0, -2.2, 'F.SilkS'),
+             fptext('Value', name, 0, 2.2, 'F.Fab'),
+             [Sym('attr'), Sym('smd')],
+             [Sym('net_tie_pad_groups'), '1, 2', '3, 4']]
+    items += box('F.Fab', -1.6, -0.8, 1.6, 0.8, 0.1)
+    items += box('F.CrtYd', -2.3, -1.7, 2.3, 1.7, 0.05)
+    items.append(line('F.SilkS', -0.5, -1.0, 0.5, -1.0, 0.12))
+    items.append(line('F.SilkS', -0.5, 1.0, 0.5, 1.0, 0.12))
+    for num, x in (('1', -1.4625), ('4', 1.4625)):
+        items.append([Sym('pad'), num, Sym('smd'), Sym('roundrect'), [Sym('at'), x, 0], [Sym('size'), 1.125, 1.75],
+                      [Sym('layers'), 'F.Cu', 'F.Paste', 'F.Mask'], [Sym('roundrect_rratio'), 0.222222],
+                      [Sym('uuid'), uid('kpad', num)]])
+    for num, x, y in (('2', -1.2, -1.25), ('3', 1.2, 1.25)):
+        items.append([Sym('pad'), num, Sym('smd'), Sym('rect'), [Sym('at'), x, y], [Sym('size'), 0.4, 0.4],
+                      [Sym('layers'), 'F.Cu'], [Sym('uuid'), uid('kpad', num)]])
+        items.append(line('F.Cu', x, y * 0.7, x, y, 0.3))
+    items.append([Sym('model'), '${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_1206_3216Metric.step',
+                  [Sym('offset'), [Sym('xyz'), 0, 0, 0]], [Sym('scale'), [Sym('xyz'), 1, 1, 1]],
+                  [Sym('rotate'), [Sym('xyz'), 0, 0, 0]]])
+    with open(os.path.join(PROJ, 'powerboard.pretty', f'{name}.kicad_mod'), 'w', encoding='utf-8') as f:
+        f.write(dump(items) + '\n')
+
+
+SWITCH = 'SW_Slide_SPDT_Angled_CK_OS102011MA1Q'
+
+
+def write_switch():
+    """KiCad's CK OS102011MA1Q with round solder pads 1-3 (same holes). The
+    switch sits at 53.5 deg along the slanted wall; Freerouting cannot
+    connect to oval or square pads at such angles."""
+    from sexp import find, find1, parse
+    src = f'/usr/share/kicad/footprints/Button_Switch_THT.pretty/{SWITCH}.kicad_mod'
+    tree = parse(open(src, encoding='utf-8').read())
+    tree[1] = SWITCH + '_Round'
+    for pad in find(tree, 'pad'):
+        if pad[1] in ('1', '2', '3'):
+            pad[3] = Sym('circle')
+            size = find1(pad, 'size')
+            size[1:] = [1.6, 1.6]
+    with open(os.path.join(PROJ, 'powerboard.pretty', f'{SWITCH}_Round.kicad_mod'), 'w', encoding='utf-8') as f:
+        f.write(dump(tree) + '\n')
+
+
+LOGO_SVG = os.path.join(PROJ, 'logo', 'kidslab-logo.svg')
+LOGO_W = 20.0   # mm
+
+
+def write_logo():
+    """KidsLab logo as silkscreen polygons.
+
+    The coloured areas of the logo become silkscreen, its black outlines stay
+    open. SVG -> bitmap (rsvg-convert) -> polygons (potrace), the holes are
+    then joined into single outlines by KiCad's own fracture."""
+    import json
+    import subprocess
+    import tempfile
+
+    import numpy as np
+    import pcbnew
+    from PIL import Image
+
+    px = 2600
+    with tempfile.TemporaryDirectory() as d:
+        png, pbm, geo = (os.path.join(d, n) for n in ('l.png', 'l.pbm', 'l.geojson'))
+        subprocess.run(['rsvg-convert', '-w', str(px), LOGO_SVG, '-o', png], check=True)
+        im = np.array(Image.open(png).convert('RGBA')).astype(float)
+        lum = 0.299 * im[..., 0] + 0.587 * im[..., 1] + 0.114 * im[..., 2]
+        silk = (im[..., 3] > 128) & (lum > 90)   # coloured or white, not the black lines
+        Image.fromarray(np.where(silk, 0, 255).astype(np.uint8)).convert('1').save(pbm)
+        subprocess.run(['potrace', '-b', 'geojson', '-t', '15', '-O', '0.4', '-o', geo, pbm], check=True)
+        features = json.load(open(geo))['features']
+    h_px = im.shape[0]
+    scale = LOGO_W / px
+    nm = pcbnew.FromMM
+
+    def pt(x, y):   # potrace: y up from the bottom; footprint: y down, centred
+        return nm((x - px / 2) * scale), nm((h_px / 2 - y) * scale)
+
+    polys = pcbnew.SHAPE_POLY_SET()
+    for f in features:
+        rings = f['geometry']['coordinates']
+        polys.NewOutline()
+        for i, ring in enumerate(rings):
+            if i:
+                polys.NewHole()
+            for x, y in ring[:-1]:   # Append() adds to the newest outline or hole
+                polys.Append(*pt(x, y))
+    polys.Simplify()
+    polys.Fracture()
+
+    name = 'KidsLab_Logo'
+    items = [Sym('footprint'), name,
+             [Sym('version'), 20240108], [Sym('generator'), 'gen_lib.py'], [Sym('generator_version'), '1'],
+             [Sym('layer'), 'F.Cu'],
+             [Sym('descr'), f'KidsLab-Logo, Bestueckungsdruck, {LOGO_W:g} mm breit'],
+             fptext('Reference', 'REF**', 0, 0, 'F.Fab', hide=True),
+             fptext('Value', name, 0, 0, 'F.Fab', hide=True),
+             [Sym('attr'), Sym('board_only'), Sym('exclude_from_pos_files'), Sym('exclude_from_bom')]]
+    for i in range(polys.OutlineCount()):
+        o = polys.Outline(i)
+        pts = [[Sym('xy'), round(pcbnew.ToMM(o.CPoint(j).x), 4), round(pcbnew.ToMM(o.CPoint(j).y), 4)]
+               for j in range(o.PointCount())]
+        items.append([Sym('fp_poly'), [Sym('pts')] + pts,
+                      [Sym('stroke'), [Sym('width'), 0], [Sym('type'), Sym('solid')]], [Sym('fill'), Sym('yes')],
+                      [Sym('layer'), 'F.SilkS'], [Sym('uuid'), uid('logo', i)]])
+    with open(os.path.join(PROJ, 'powerboard.pretty', f'{name}.kicad_mod'), 'w', encoding='utf-8') as f:
+        f.write(dump(items) + '\n')
+
+
 if __name__ == '__main__':
     write_symbols()
     write_footprint()
+    write_kelvin()
+    write_logo()
+    write_switch()

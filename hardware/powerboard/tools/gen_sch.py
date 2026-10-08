@@ -57,104 +57,138 @@ def p(x, y):
 
 
 # --- Battery connector, reverse polarity protection ----------------------
-part('J1', 'Connector:Conn_01x02_Pin', 'BAT JST-PH 2P', 'Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal',
-     '', {'1': 'J_BATP', '2': 'BATN'}, p(10, 15), desc='Akku, SMD (von JLC bestückt). Pin 1 = +')
-part('Q1', 'Transistor_FET:AO3401A', 'AO3401A', SOT23, 'C15127',
-     {'1': 'Q1_G', '2': 'BAT+', '3': 'J_BATP'}, p(22, 15), desc='Verpolschutz')
-R('R1', '10k', 'Q1_G', 'BATN', p(16, 21), 'C25804', 'Gate Verpolschutz')
+part('J1', 'Connector:Conn_01x02_Pin', 'BAT JST-PH 2P', 'Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical',
+     '', {'1': 'J_BATP', '2': 'BATN'}, p(6, 14), kit=True,
+     desc='Akku, THT (Kit, B2B-PH-K-S C131337). Pin 1 = +. Vor dem ersten Anstecken auf Kurzschluss pruefen')
+# two in parallel: one AO3401A alone would drop too much at servo peaks
+for i, (ref, y) in enumerate([('Q1', 10), ('Q7', 20)]):
+    part(ref, 'Transistor_FET:AO3401A', 'AO3401A', SOT23, 'C15127',
+         {'1': 'Q1_G', '2': 'BAT_CELL', '3': 'J_BATP'}, p(18, y), desc='Verpolschutz, parallel')
+R('R1', '10k', 'Q1_G', 'BATN', p(12, 26), 'C25804', 'Gate Verpolschutz')
 
-# --- Protection: DW01A + FS8205A ----------------------------------------
+# --- Protection: DW01A + 2x FS8205A ---------------------------------------
 part('U2', 'Battery_Management:DW01A', 'DW01A', 'Package_TO_SOT_SMD:SOT-23-6', 'C2927799',
-     {'1': 'DW_OD', '2': 'DW_CS', '3': 'DW_OC', '4': None, '5': 'DW_VDD', '6': 'BATN'}, p(14, 36), ty=8.89)
-R('R2', '100', 'BAT+', 'DW_VDD', p(4, 32), desc='DW01 VDD-Filter')
-C('C1', '100n', 'DW_VDD', 'BATN', p(4, 40), lcsc='C14663')
-R('R3', '1k', 'DW_CS', 'GND', p(24, 38), 'C21190', 'DW01 CS')
-part('Q2', 'powerboard:FS8205A', 'FS8205A', 'Package_TO_SOT_SMD:SOT-23-6', 'C908265',
-     {'1': 'BATN', '2': 'FET_D', '3': 'GND', '4': 'DW_OC', '5': 'FET_D', '6': 'DW_OD'}, p(14, 50),
-     desc='S1 = Zellminus, S2 = GND (PACK-)', ty=10.16)
+     {'1': 'DW_OD', '2': 'DW_CS', '3': 'DW_OC', '4': None, '5': 'DW_VDD', '6': 'BATN'}, p(14, 40), ty=8.89)
+R('R2', '100', 'BAT_CELL', 'DW_VDD', p(4, 36), 'C22775', 'DW01 VDD-Filter')
+C('C1', '100n', 'DW_VDD', 'BATN', p(4, 44), lcsc='C14663')
+R('R3', '1k', 'DW_CS', 'GND', p(24, 42), 'C21190', 'DW01 CS')
+# two in parallel halve the on-resistance: overcurrent trip moves from ~3 A to ~6-8 A
+for ref, x in [('Q2', 8), ('Q6', 20)]:
+    part(ref, 'powerboard:FS8205A', 'FS8205A', 'Package_TO_SOT_SMD:SOT-23-6', 'C908265',
+         {'1': 'BATN', '2': 'FET_D', '3': 'GND', '4': 'DW_OC', '5': 'FET_D', '6': 'DW_OD'}, p(x, 54),
+         desc='S1 = Zellminus, S2 = GND (PACK-), zwei parallel', ty=10.16)
+
+# --- Current and voltage measurement --------------------------------------
+# Kelvin footprint: the INA226 senses right at the shunt pads (net tie 1-2, 3-4)
+part('R15', 'Device:R_Shunt', '10m', 'powerboard:R_1206_3216Metric_Kelvin', 'C105362',
+     {'1': 'BAT_CELL', '2': 'SENSE_P', '3': 'SENSE_N', '4': 'BAT+'}, p(34, 14),
+     desc='Shunt 10 mOhm 1 W, 1206, Messpads 2/3', ty=7.62)
+part('U5', 'Sensor_Energy:INA226', 'INA226', 'Package_SO:TSSOP-10_3x3mm_P0.5mm', 'C49851',
+     {'1': '3V3', '2': '3V3', '3': None, '4': 'I2C_SDA', '5': 'I2C_SCL', '6': '3V3', '7': 'GND',
+      '8': 'SENSE_N', '9': 'SENSE_N', '10': 'SENSE_P'}, p(46, 16),
+     desc='Strom + Akkuspannung, I2C 0x45 (A0 = A1 = VS)', ty=15.24)
+C('C15', '100n', '3V3', 'GND', p(56, 8), lcsc='C14663')
 
 # --- Charger -------------------------------------------------------------
-part('U1', 'Battery_Management:LTC4054ES5-4.2', 'TP4054', 'Package_TO_SOT_SMD:SOT-23-5', 'C668215',
-     {'1': 'CHRG_N', '2': 'GND', '3': 'BAT+', '4': 'VSYS', '5': 'PROG'}, p(48, 18),
-     desc='UMW TP4054, Pinbelegung wie LTC4054', ty=12.7)
-R('R4', '5.1k', 'PROG', 'GND', p(40, 24), desc='Ladestrom ~200 mA')
-C('C2', '4.7u', 'VSYS', 'GND', p(56, 10), fp=C0805, lcsc='C1779')
-C('C3', '4.7u', 'BAT+', 'GND', p(60, 22), fp=C0805, lcsc='C1779')
-R('R5', '1k', '3V3', 'LED_A', p(34, 8), 'C21190')
+part('U1', 'Battery_Management:TP4056-42-ESOP8', 'TP4056', 'Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm',
+     'C16581', {'1': 'GND', '2': 'PROG', '3': 'GND', '4': 'VSYS', '5': 'BAT+', '6': None, '7': 'CHRG_N',
+                '8': 'VSYS', '9': 'GND'}, p(76, 16),
+     desc='TEMP an GND = kein NTC, CE an VCC = immer an', ty=15.24)
+R('R4', '5.1k', 'PROG', 'GND', p(88, 22), 'C23186', 'Ladestrom 1200 V / 5,1 k = 235 mA')
+C('C2', '4.7u', 'VSYS', 'GND', p(68, 8), fp=C0805, lcsc='C1779')
+C('C3', '4.7u', 'BAT+', 'GND', p(90, 8), fp=C0805, lcsc='C1779')
+R('R5', '1k', '3V3', 'LED_A', p(62, 14), 'C21190')
 part('D1', 'Device:LED_Small', 'rot', 'LED_SMD:LED_0603_1608Metric', 'C2286',
-     {'1': 'CHRG_N', '2': 'LED_A'}, p(34, 14), rot=90, desc='Lade-LED')
-R('R6', '10k', 'CHRG_N', 'CHRG_IO', p(30, 18), 'C25804', 'CHRG -> GPIO1')
+     {'1': 'CHRG_N', '2': 'LED_A'}, p(62, 22), rot=90, desc='Lade-LED, leuchtet nur beim Laden')
 
 # --- On/off + power path -------------------------------------------------
 part('Q5', 'Transistor_FET:AO3401A', 'AO3401A', SOT23, 'C15127',
-     {'1': 'SW_GATE', '2': 'BAT+', '3': 'BAT_SW'}, p(46, 40), desc='Ein/Aus')
-R('R7', '1M', 'SW_GATE', 'BAT+', p(40, 34), desc='Q5 aus, solange SW1 offen')
-part('SW1', 'Switch:SW_SPDT', 'EIN/AUS', 'Button_Switch_THT:SW_Slide_SPDT_Angled_CK_OS102011MA1Q', '',
-     {'1': 'GND', '2': 'SW_GATE', '3': None}, p(36, 44), kit=True, desc='Schiebeschalter, Bauform offen')
+     {'1': 'SW_GATE', '2': 'BAT+', '3': 'BAT_SW'}, p(46, 44), desc='Ein/Aus')
+R('R7', '1M', 'SW_GATE', 'BAT+', p(40, 38), 'C22935', 'Q5 aus, solange SW1 offen')
+part('SW1', 'Switch:SW_SPDT', 'EIN/AUS', 'powerboard:SW_Slide_SPDT_Angled_CK_OS102011MA1Q_Round', '',
+     {'1': 'GND', '2': 'SW_GATE', '3': None}, p(36, 48), kit=True, desc='Schiebeschalter, Bauform offen')
 part('U3', 'Power_Management:LM66100DCK', 'LM66100', 'Package_TO_SOT_SMD:SOT-363_SC-70-6', 'C2869734',
-     {'1': 'BAT_SW', '2': 'GND', '3': 'GND', '4': None, '5': None, '6': 'VSYS'}, p(58, 40),
+     {'1': 'BAT_SW', '2': 'GND', '3': 'GND', '4': None, '5': None, '6': 'VSYS'}, p(58, 44),
      desc='Ideale Diode, CE fest an', ty=8.89)
-C('C4', '100n', 'BAT_SW', 'GND', p(52, 48), lcsc='C14663')
-C('C5', '10u', 'VSYS', 'GND', p(66, 46), fp=C0805, lcsc='C15850')
-C('C6', '100n', 'VSYS', 'GND', p(70, 46), lcsc='C14663')
+C('C4', '100n', 'BAT_SW', 'GND', p(52, 52), lcsc='C14663')
+C('C5', '10u', 'VSYS', 'GND', p(66, 50), fp=C0805, lcsc='C15850')
+C('C6', '100n', 'VSYS', 'GND', p(70, 50), lcsc='C14663')
 
-# --- Servo rail ----------------------------------------------------------
-part('Q3', 'Transistor_FET:AO3401A', 'AO3401A', SOT23, 'C15127',
-     {'1': 'SERVO_G', '2': 'BAT+', '3': 'VSERVO'}, p(22, 66), desc='Servo-Schiene')
-R('R8', '100k', 'SERVO_G', 'BAT+', p(12, 62), 'C25803', 'Servos aus per Default')
-C('C7', '47n', 'SERVO_G', 'BAT+', p(16, 62), desc='Soft-Start, am Prototyp abgleichen')
-R('R9', '10k', 'SERVO_G', 'Q4_D', p(12, 70), 'C25804')
-part('Q4', 'Transistor_FET:2N7002', '2N7002', SOT23, 'C8545',
-     {'1': 'SERVO_EN', '2': 'GND', '3': 'Q4_D'}, p(12, 80))
-R('R10', '100k', 'SERVO_EN', 'GND', p(4, 84), 'C25803', 'Servos aus beim Booten')
-part('C8', 'Device:C_Polarized_Small', '470u 10V', 'Capacitor_SMD:CP_Elec_6.3x7.7', '',
-     {'1': 'VSERVO', '2': 'GND'}, p(30, 72), desc='SMD-Elko, von JLC bestückt')
-part('J2', 'Connector:Conn_01x03_Pin', 'SERVO L', 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', '',
-     {'1': 'SERVO_L_S', '2': 'VSERVO', '3': 'GND'}, p(38, 64), kit=True, desc='S + -')
-part('J3', 'Connector:Conn_01x03_Pin', 'SERVO R', 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', '',
-     {'1': 'SERVO_R_S', '2': 'VSERVO', '3': 'GND'}, p(38, 76), kit=True, desc='S + -')
-R('R13', '220', 'SERVO_L', 'SERVO_L_S', p(46, 64))
-R('R14', '220', 'SERVO_R', 'SERVO_R_S', p(46, 76))
+# --- 5 V servo rail: boost, switched by GPIO15 ---------------------------
+part('U6', 'powerboard:TPS61023', 'TPS61023', 'Package_TO_SOT_SMD:SOT-563', 'C919459',
+     {'1': 'BOOST_FB', '2': 'SERVO_EN', '3': 'BAT+', '4': 'GND', '5': 'BOOST_SW', '6': 'V5_SERVO'},
+     p(18, 76), desc='EN low = Ausgang vom Akku getrennt', ty=8.89)
+part('L1', 'Device:L_Small', '1u', 'Inductor_SMD:L_Sunlord_MWSA0402S', 'C408332',
+     {'1': 'BAT+', '2': 'BOOST_SW'}, p(18, 66), rot=90, desc='1 uH, 7 A Saettigung')
+C('C10', '22u', 'BAT+', 'GND', p(6, 70), fp=C0805, lcsc='C45783')
+R('R10', '100k', 'SERVO_EN', 'GND', p(6, 80), 'C25803', 'Servos aus beim Booten')
+R('R8', '750k', 'V5_SERVO', 'BOOST_FB', p(30, 72), 'C23240', '0,595 V x (1 + 750k/100k) = 5,06 V')
+C('C7', '220p', 'V5_SERVO', 'BOOST_FB', p(34, 72), lcsc='C1603', desc='Feedforward, Nullstelle ~1 kHz')
+R('R9', '100k', 'BOOST_FB', 'GND', p(30, 82), 'C25803')
+for i in range(4):
+    C(f'C{11 + i}', '22u', 'V5_SERVO', 'GND', p(40 + i * 4, 82), fp=C0805, lcsc='C45783')
 
-# --- Battery sense -------------------------------------------------------
-R('R11', '470k', 'BAT+', 'VBAT_SENSE', p(60, 62))
-R('R12', '470k', 'VBAT_SENSE', 'GND', p(60, 70))
-C('C9', '100n', 'VBAT_SENSE', 'GND', p(66, 70), lcsc='C14663')
+# --- Servo ports ---------------------------------------------------------
+SERVOS = [('J2', 'SERVO1', 'R13'), ('J3', 'SERVO2', 'R14'), ('J5', 'SERVO3', 'R16'), ('J6', 'SERVO4', 'R17')]
+for i, (ref, net, rref) in enumerate(SERVOS):
+    part(ref, 'Connector:Conn_01x03_Pin', f'SERVO {i + 1}',
+         'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', '',
+         {'1': f'{net}_S', '2': 'V5_SERVO', '3': 'GND'}, p(64, 64 + i * 9), kit=True, desc='S + -, 5 V')
+    R(rref, '220', net, f'{net}_S', p(72, 64 + i * 9), 'C22962')
+
+# --- Analog ports --------------------------------------------------------
+for i in range(3):
+    part(f'J{7 + i}', 'Connector:Conn_01x03_Pin', f'ANALOG A{i}',
+         'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', '',
+         {'1': 'GND', '2': '3V3', '3': f'A{i}'}, p(86, 64 + i * 9), kit=True, desc='GND 3V3 SIG, 0-3,1 V')
+    R(f'R{18 + i}', '1k', f'A{i}', f'A{i}_IO', p(94, 64 + i * 9), 'C21190', 'Schutz-Serienwiderstand')
+
+# --- I2C ports -----------------------------------------------------------
+for i in range(2):
+    part(f'J{10 + i}', 'Connector:Conn_01x04_Pin', f'I2C {i + 1}',
+         'Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical', '',
+         {'1': 'GND', '2': '3V3', '3': 'I2C_SDA', '4': 'I2C_SCL'}, p(108, 64 + i * 11), kit=True,
+         desc='GND 3V3 SDA SCL (Grove-Reihenfolge)')
+R('R21', '4.7k', '3V3', 'I2C_SDA', p(118, 66), 'C23162', 'Pull-up SDA')
+R('R22', '4.7k', '3V3', 'I2C_SCL', p(124, 66), 'C23162', 'Pull-up SCL')
 
 # --- ESP32-C6-Zero -------------------------------------------------------
 part('U4', 'powerboard:ESP32-C6-Zero', 'ESP32-C6-Zero', 'powerboard:Waveshare_ESP32-C6-Zero_Socket', '',
-     {'1': 'VSYS', '2': 'GND', '3': '3V3', '4': 'VBAT_SENSE', '5': 'CHRG_IO', '6': 'SERVO_EN',
+     {'1': 'VSYS', '2': 'GND', '3': '3V3', '4': 'A0_IO', '5': 'A1_IO', '6': 'A2_IO',
       '7': 'TFT_RST', '8': 'TFT_SCK', '9': 'TFT_MOSI',
-      '10': None, '11': None, '12': None, '13': None, '14': 'SERVO_R', '15': 'SERVO_L',
-      '16': 'TFT_DC', '17': 'TFT_CS', '18': None},
-     p(96, 22), kit=True, desc='Gesteckt auf 2x Buchsenleiste 1x9', ty=15.24)
+      '10': 'SERVO3', '11': 'SERVO4', '12': 'I2C_SDA', '13': 'SERVO_EN', '14': 'SERVO2', '15': 'SERVO1',
+      '16': 'TFT_DC', '17': 'TFT_CS', '18': 'I2C_SCL'},
+     p(116, 22), kit=True, desc='Gesteckt auf 2x Buchsenleiste 1x9', ty=15.24)
 
 # --- Display -------------------------------------------------------------
-part('J4', 'Connector:Conn_01x07_Socket', 'DISPLAY GC9A01', 'Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Horizontal', '',
+part('J4', 'Connector:Conn_01x07_Pin', 'DISPLAY GC9A01', 'Connector_PinHeader_2.54mm:PinHeader_1x07_P2.54mm_Vertical', '',
      {'1': '3V3', '2': 'GND', '3': 'TFT_SCK', '4': 'TFT_MOSI', '5': 'TFT_DC', '6': 'TFT_CS', '7': 'TFT_RST'},
-     p(96, 50), kit=True, desc='VCC GND SCL SDA DC CS RST, Display steckt direkt', ty=11.43)
+     p(116, 48), kit=True, desc='VCC GND SCL SDA DC CS RST, Kabel zum Display', ty=11.43)
 
 # --- Test points, holes --------------------------------------------------
-for i, net in enumerate(['BAT+', 'GND', 'VSYS', 'VSERVO', '3V3']):
+for i, net in enumerate(['BAT+', 'GND', 'VSYS', 'V5_SERVO', '3V3']):
     part(f'TP{i + 1}', 'Connector:TestPoint', f'TP_{net}', 'TestPoint:TestPoint_Pad_D1.0mm', '',
-         {'1': net}, p(84 + i * 5, 66), bom=False)
+         {'1': net}, p(134 + i * 5, 64), bom=False)
 for i in range(2):
     part(f'H{i + 1}', 'Mechanical:MountingHole', 'M2', 'MountingHole:MountingHole_2.2mm_M2', '',
-         {}, p(84 + i * 5, 76), bom=False)
+         {}, p(134 + i * 5, 74), bom=False)
 
 # Nets driven only by passive pins or power inputs need a PWR_FLAG for ERC.
 PWR_FLAGS = ['GND', 'BATN', 'DW_VDD', 'BAT_SW', 'J_BATP']
 
 NOTES = [
     (p(2, 4), 'Akku-Eingang, Verpolschutz'),
-    (p(2, 28), 'Schutz: DW01A + FS8205A (BATN nur hier und an J1)'),
-    (p(28, 4), 'Lader TP4054, 200 mA'),
-    (p(34, 30), 'Ein/Aus (Q5) + Power Path (LM66100, CE fest auf GND)'),
-    (p(2, 56), 'Servo-Schiene (GPIO2 schaltet, nur aus dem Akku)'),
-    (p(56, 56), 'Akkumessung GPIO0'),
-    (p(84, 4), 'Waveshare ESP32-C6-Zero'),
-    (p(84, 40), 'Display, direkt gesteckt'),
-    (p(82, 60), 'Testpunkte, Befestigung'),
+    (p(2, 32), 'Schutz: DW01A + 2x FS8205A'),
+    (p(28, 4), 'Strom + Spannung: INA226'),
+    (p(60, 4), 'Lader TP4056, 235 mA'),
+    (p(36, 32), 'Ein/Aus (Q5) + Power Path (LM66100)'),
+    (p(2, 60), 'Servo-Schiene 5 V (TPS61023, GPIO15 schaltet)'),
+    (p(60, 58), 'Servo-Ports'),
+    (p(82, 58), 'Analog 3V3'),
+    (p(104, 58), 'I2C 3V3'),
+    (p(104, 4), 'Waveshare ESP32-C6-Zero'),
+    (p(104, 40), 'Display, per Kabel'),
+    (p(132, 58), 'Testpunkte, Befestigung'),
 ]
 
 
@@ -302,7 +336,7 @@ def build():
             raise SystemExit(f"{pt['ref']}: pins without net: {sorted(missing)}")
 
     for i, net in enumerate(PWR_FLAGS):
-        x, y = p(84 + i * 5, 86)
+        x, y = p(134 + i * 5, 84)
         ref = f'#FLG{i + 1:02d}'
         claim(x, y, net, ref)
         body.append([Sym('symbol'), [Sym('lib_id'), 'power:PWR_FLAG'], [Sym('at'), x, y, 0], [Sym('unit'), 1],
@@ -326,7 +360,7 @@ def build():
 
     sch = [Sym('kicad_sch'), [Sym('version'), 20231120], [Sym('generator'), 'gen_sch.py'],
            [Sym('generator_version'), '1'], [Sym('uuid'), ROOT], [Sym('paper'), 'A3'],
-           [Sym('title_block'), [Sym('title'), 'MF26 Robo-Buddy Powerboard'], [Sym('rev'), '0.1'],
+           [Sym('title_block'), [Sym('title'), 'MF26 Robo-Buddy Powerboard'], [Sym('rev'), '0.2'],
             [Sym('company'), 'KidsLab'],
             [Sym('comment'), 1, 'Erzeugt von tools/gen_sch.py - Netze nur dort aendern']],
            lib_symbols] + body + [[Sym('sheet_instances'), [Sym('path'), '/', [Sym('page'), '1']]]]

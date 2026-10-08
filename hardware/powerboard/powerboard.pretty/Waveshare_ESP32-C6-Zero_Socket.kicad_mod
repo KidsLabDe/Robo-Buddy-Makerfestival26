@@ -260,7 +260,7 @@
 		(layer "F.SilkS")
 		(uuid "7e3bc14e-11fc-5bcf-b765-ef8581a69659")
 	)
-	(pad "1" thru_hole rect
+	(pad "1" thru_hole circle
 		(at -8.89 -10.16)
 		(size 1.7 1.7)
 		(drill 1)

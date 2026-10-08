@@ -4,7 +4,10 @@
       "defaults": {},
       "diff_pair_dimensions": [],
       "drc_exclusions": [],
-      "rules": {},
+      "rules": {
+        "min_clearance": 0.15,
+        "min_track_width": 0.15
+      },
       "track_widths": [],
       "via_dimensions": []
     }
@@ -19,10 +22,69 @@
     "version": 1
   },
   "net_settings": {
-    "classes": [],
+    "classes": [
+      {
+        "name": "Default",
+        "clearance": 0.15,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "priority": 2147483647
+      },
+      {
+        "name": "Power",
+        "clearance": 0.15,
+        "track_width": 0.8,
+        "via_diameter": 0.8,
+        "via_drill": 0.4,
+        "priority": 0
+      }
+    ],
     "meta": {
-      "version": 0
-    }
+      "version": 5
+    },
+    "netclass_patterns": [
+      {
+        "netclass": "Power",
+        "pattern": "/J_BATP"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/BAT_CELL"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/BAT+"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/BATN"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/FET_D"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/V5_SERVO"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/VSYS"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/BAT_SW"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/BOOST_SW"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "/GND"
+      }
+    ]
   },
   "pcbnew": {
     "page_layout_descr_file": ""
