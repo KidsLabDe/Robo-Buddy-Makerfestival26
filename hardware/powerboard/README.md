@@ -2,7 +2,7 @@
 
 Trägerplatine, die den Robo-Buddy akkubetrieben macht. Anforderungen und Begründungen: `POWERBOARD-HANDOFF.md` im Repo-Hauptordner. ESP-Board: `../esp32-c6-zero/`.
 
-Stand Rev 0.2: **Schaltplan fertig, ERC ohne Meldungen. Platine mit echter Kontur, platziert und geroutet (2 Lagen). Fertigungsdateien für JLCPCB in `fertigung/`. Vor der ersten Bestellung die Punkte unter „Offen“ prüfen.**
+Stand Rev 0.2: **Schaltplan fertig, ERC ohne Meldungen. Platine mit echter Kontur, platziert und geroutet (2 Lagen). Fertigungsdateien für JLCPCB in `fertigung/`. Rev 0.2 ist bestellt, siehe „Bestellung“.**
 
 ## Was drauf ist
 
@@ -47,6 +47,7 @@ Hinweise:
 - **USB-C** endet ca. 1,25 mm hinter der Außenfläche der Hülle. Ganz bündig ginge nur, wenn das ESP-Modul 1 mm über die Platinenkante ragt. Dann läge aber Pad 1 auf der Kante, weil der erste Pin nur 1,6 mm hinter der Modulkante sitzt. Bei Bedarf lässt sich die Wand um die Buchse innen etwas ausdünnen.
 - **Display:** Es steht vorne tiefer als die Platine. J4 ist deshalb eine Stiftleiste für ein kurzes Kabel.
 - Mindestabstand im Projekt 0,15 mm, minimale Bahnbreite 0,15 mm (Pads des SOT-563 und des INA226 liegen so eng). JLC fertigt 0,1 mm.
+- **Drehung bei JLC:** Die Bauteilmodelle von JLC liegen teils anders als die KiCad-Footprints. `tools/export_jlc.py` korrigiert die Drehung in der CPL pro LCSC-Teil (`JLC_ROTATION`): AO3401A, FS8205A, TPS61023 um 180°, DW01A, LM66100, TP4056, INA226 um 90° im Uhrzeigersinn. Am 8. Oktober 2026 im Platzierungs-Viewer von JLC geprüft, Pin 1 jedes Teils sitzt auf der Pin-1-Markierung, D1 mit Kathode an Pin 1. Neue Teile dort prüfen und eintragen.
 - Bauteilnummern stehen nicht im Bestückungsdruck, nur auf der Fab-Lage (Bestückung bei JLC geht nach Koordinaten, die Anschlüsse haben eigene Beschriftungen).
 - In 3D fehlt das ESP-Modul selbst, weil es dafür kein 3D-Modell gibt. Zu sehen sind nur die beiden Buchsenleisten.
 
@@ -118,12 +119,21 @@ GND wird wie ein normales Netz geroutet; die Flächen verstärken es nur. So ble
   - LM66100: 1 VIN, 2 GND, 3 CE, 4 NC, 5 ST, 6 VOUT
 - Das LM66100-Datenblatt empfiehlt, ST auf GND zu legen, wenn es nicht gebraucht wird. Hier ist es offen gelassen: Es ist ein Open-Drain-Ausgang, und auf GND gelegt würde ERC einen Typkonflikt mit dem PWR_FLAG melden. Elektrisch macht das keinen Unterschied.
 
+## Bestellung
+
+Rev 0.2 am 8. Oktober 2026 bei JLCPCB in den Warenkorb gelegt (noch nicht bezahlt):
+
+- PCB: 10 Stück, FR-4, 2 Lagen, 1,6 mm, grün, **LeadFree HASL** (die Kinder löten die THT-Teile selbst), 54,8 × 53,2 mm laut JLC.
+- PCBA: Economic, nur Oberseite, 10 Stück, alle 24 Positionen automatisch zugeordnet, ohne THT-Teile.
+- Produktbeschreibung für den Zoll: Research/Education/DIY, „DIY“ (HS 902300).
+- Preis: 6,20 $ PCB + 67,81 $ PCBA = 74,01 $ ohne Versand (Bauteile 34,10 $, Extended-Gebühr 21,63 $).
+
 ## Offen
 
 - **Akkuwiege in der Hülle:** Die Hülle hat noch die Wiege für den Zylinder-Akku (Wände bei y ≈ 17 und 34, ab z ≈ 22). Die hintere Ecke des gesteckten ESP ragt da hinein (`passung_schnitte.png`, rechtes Bild). Für den Pouch-Akku muss die Wiege ohnehin raus.
-- **Befestigung:** H1 und H2 (M2) sind frei gesetzt. Lage mit den Schraubpunkten der Bodenplatte abgleichen.
+- **Befestigung:** H1 und H2 (M2) bleiben, wo sie sind. Die Bodenplatte (3D-Druck) wird bei Bedarf an die Platine angepasst.
 - **Footprint C6-Zero:** Reihenabstand 15,24 mm (6 × 2,54) laut Waveshare-DXF, Wert in `tools/gen_lib.py` (`ROW`).
-- **SW1:** Der Footprint (CK OS102011MA1Q, gewinkelt) ist ein Platzhalter, bis die Bauform feststeht.
+- **SW1:** CK OS102011MA1Q, gewinkelt.
 - **Strom:** JST-PH ist für 2 A spezifiziert. Im Betrieb reicht das, blockieren alle 4 Servos, sind kurz 3–4 A möglich. Die Zelle muss diese Spitzen liefern können.
 - **INA226 bei ausgeschaltetem ESP:** Die Messeingänge hängen am Akku, die Versorgung (3V3) fehlt dann. Laut Datenblatt sind die Eingänge unabhängig von VS bis 36 V zulässig. Den Ruhestrom im ausgeschalteten Zustand am Prototyp messen.
 - **THT-Teile:** U4-Sockel, J1–J11 und SW1 sind mit dem Feld `Kit = THT-Kit` markiert. Beim JLC-Export werden sie herausgefiltert.

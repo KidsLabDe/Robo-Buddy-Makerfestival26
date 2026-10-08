@@ -269,7 +269,7 @@ Lager, Preise und Basic/Extended am 8. Oktober 2026 live bei JLCPCB geprüft. Vo
 2. Schaltplan aus `tools/gen_sch.py` erzeugen, `kicad-cli sch erc` ohne Meldungen.
 3. Netzliste gegen Tabelle 3.1 und Abschnitt 4 prüfen (insbesondere: `BATN` nur an J1 Pin 2, DW01 VSS, FS8205A, R1, C1; Servo-Plus nur an `V5_SERVO`).
 4. Platine aus `tools/gen_pcb.py`, Routing mit `tools/route.py` (Freerouting + `maze.py`, Ablauf in `hardware/powerboard/README.md`); danach `kicad-cli pcb drc`.
-5. JLCPCB-Export mit `tools/export_jlc.py` nach `hardware/powerboard/fertigung/`: Gerber + Bohrdaten, BOM (Comment, Designator, Footprint, LCSC) und CPL (Designator, Mid X, Mid Y, Layer, Rotation). Rotationen der SOT-Teile im JLC-Vorschau-Viewer kontrollieren.
+5. JLCPCB-Export mit `tools/export_jlc.py` nach `hardware/powerboard/fertigung/`: Gerber + Bohrdaten, BOM (Comment, Designator, Footprint, LCSC) und CPL (Designator, Mid X, Mid Y, Layer, Rotation). Die Drehungen korrigiert das Skript pro LCSC-Teil (`JLC_ROTATION`); neue Teile im JLC-Vorschau-Viewer kontrollieren und dort eintragen.
 6. `README.md` im Hardware-Ordner: Aufbau, Kit-Liste, Lötreihenfolge für Kinder, **Prüfschritt vor dem ersten Akkuanschluss**:
    1. Ohne Zelle, ohne USB, Durchgangsprüfer: **direkt über die beiden J1-Pins** kein Kurzschluss. Außerdem TP_BAT+ ↔ TP_GND, TP_VSYS ↔ TP_GND, TP_V5_SERVO ↔ TP_GND, TP_3V3 ↔ TP_GND: kein Kurzschluss.
    2. USB anstecken (noch ohne Zelle): TP_VSYS ≈ 4,7–5 V, TP_3V3 ≈ 3,3 V. **USB wieder abziehen.**
