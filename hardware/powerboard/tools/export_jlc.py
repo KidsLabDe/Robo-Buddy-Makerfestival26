@@ -59,9 +59,11 @@ def assembly(board):
     with open(bom, 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
         w.writerow(['Comment', 'Designator', 'Footprint', 'LCSC'])
-        for (value, footprint, lcsc), refs in sorted(groups.items(), key=lambda g: g[1][0]):
-            w.writerow([value, ','.join(sorted(refs, key=lambda r: (r.rstrip('0123456789'), int(r.lstrip('ABCDEFGHIJKLMNOPQRSTUVWXYZ') or 0)))),
-                        footprint, lcsc])
+        def order(ref):     # C2 before C10
+            return ref.rstrip('0123456789'), int(ref.lstrip('ABCDEFGHIJKLMNOPQRSTUVWXYZ') or 0)
+        rows = [(sorted(refs, key=order), key) for key, refs in groups.items()]
+        for refs, (value, footprint, lcsc) in sorted(rows, key=lambda r: order(r[0][0])):
+            w.writerow([value, ','.join(refs), footprint, lcsc])
     cpl = os.path.join(OUT, 'powerboard_cpl.csv')
     with open(cpl, 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)

@@ -122,7 +122,7 @@ GND wird wie ein normales Netz geroutet; die Flächen verstärken es nur. So ble
 
 - **Akkuwiege in der Hülle:** Die Hülle hat noch die Wiege für den Zylinder-Akku (Wände bei y ≈ 17 und 34, ab z ≈ 22). Die hintere Ecke des gesteckten ESP ragt da hinein (`passung_schnitte.png`, rechtes Bild). Für den Pouch-Akku muss die Wiege ohnehin raus.
 - **Befestigung:** H1 und H2 (M2) sind frei gesetzt. Lage mit den Schraubpunkten der Bodenplatte abgleichen.
-- **Footprint C6-Zero:** Der Reihenabstand von 17,78 mm stammt aus der Waveshare-Zeichnung und muss am echten Board nachgemessen werden. Der Wert steht in `tools/gen_lib.py` (`ROW`).
+- **Footprint C6-Zero:** Reihenabstand 15,24 mm (6 × 2,54) laut Waveshare-DXF, Wert in `tools/gen_lib.py` (`ROW`).
 - **SW1:** Der Footprint (CK OS102011MA1Q, gewinkelt) ist ein Platzhalter, bis die Bauform feststeht.
 - **Strom:** JST-PH ist für 2 A spezifiziert. Im Betrieb reicht das, blockieren alle 4 Servos, sind kurz 3–4 A möglich. Die Zelle muss diese Spitzen liefern können.
 - **INA226 bei ausgeschaltetem ESP:** Die Messeingänge hängen am Akku, die Versorgung (3V3) fehlt dann. Laut Datenblatt sind die Eingänge unabhängig von VS bis 36 V zulässig. Den Ruhestrom im ausgeschalteten Zustand am Prototyp messen.

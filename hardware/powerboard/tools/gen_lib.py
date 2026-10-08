@@ -107,7 +107,7 @@ def write_symbols():
 
 
 # --------------------------------------------------------------- footprint --
-ROW = 17.78   # pin row spacing - nach Waveshare-Zeichnung, am Board nachmessen!
+ROW = 15.24   # pin row spacing (6 x 2.54), laut Waveshare-DXF
 PITCH = 2.54
 BOARD_W, BOARD_H = 18.0, 23.5
 FIRST = 1.59  # Oberkante bis Mitte Pin 1
@@ -142,7 +142,7 @@ def write_footprint():
              [Sym('version'), 20240108], [Sym('generator'), 'gen_lib.py'], [Sym('generator_version'), '1'],
              [Sym('layer'), 'F.Cu'],
              [Sym('descr'), 'Waveshare ESP32-C6-Zero auf 2x Buchsenleiste 1x9 P2.54, Reihenabstand '
-                            f'{ROW} mm (vorlaeufig, am Board nachmessen). USB-C oben (-Y).'],
+                            f'{ROW} mm laut Waveshare-DXF. USB-C oben (-Y).'],
              [Sym('tags'), 'ESP32-C6 Waveshare Zero socket'],
              fptext('Reference', 'REF**', 0, top - 3, 'F.SilkS'),
              fptext('Value', 'ESP32-C6-Zero', 0, 0, 'F.Fab'),
@@ -171,6 +171,7 @@ def write_footprint():
                       [Sym('remove_unused_layers'), Sym('no')], [Sym('uuid'), uid('pad', i)]])
     # no copper under the chip antenna (end opposite USB-C)
     ay1, ay2 = -top - 3.5, -top + 1.0
+    ax = ROW / 2 - 1.2              # between the pin rows, clear of the pads
     items.append([Sym('zone'), [Sym('net'), 0], [Sym('net_name'), ''], [Sym('layers'), 'F.Cu', 'B.Cu'],
                   [Sym('uuid'), uid('zone', 'antenna')], [Sym('name'), 'Antenne'],
                   [Sym('hatch'), Sym('edge'), 0.5], [Sym('connect_pads'), [Sym('clearance'), 0]],
@@ -179,8 +180,8 @@ def write_footprint():
                    [Sym('pads'), Sym('not_allowed')], [Sym('copperpour'), Sym('not_allowed')],
                    [Sym('footprints'), Sym('allowed')]],
                   [Sym('fill'), [Sym('thermal_gap'), 0.5], [Sym('thermal_bridge_width'), 0.5]],
-                  [Sym('polygon'), [Sym('pts'), [Sym('xy'), -7.4, ay1], [Sym('xy'), 7.4, ay1],
-                                    [Sym('xy'), 7.4, ay2], [Sym('xy'), -7.4, ay2]]]])
+                  [Sym('polygon'), [Sym('pts'), [Sym('xy'), -ax, ay1], [Sym('xy'), ax, ay1],
+                                    [Sym('xy'), ax, ay2], [Sym('xy'), -ax, ay2]]]])
     # 3D: the two sockets (no model of the module itself exists)
     for x in (xl, xr):
         items.append([Sym('model'), '${KICAD10_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/'

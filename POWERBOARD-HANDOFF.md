@@ -173,7 +173,7 @@ Laut Schaltplan:
 - **Kein Lader, kein BAT-Pad, keine Power-LED.** Nur WS2812 an GPIO8. Kein Konflikt mit unserem Lader, kein Dauerverbrauch durch LEDs.
 - Chip-Antenne am Ende gegenüber USB-C.
 
-Vor dem Footprint am gelieferten Board nachmessen: Reihenabstand (laut Zeichnung vermutlich 17,78 mm = 7 × 2,54, Randpins sind halbe Lötaugen), Pinraster, Abstand USB-C-Kante ↔ erster Pin, Board-Außenmaß.
+Maße laut Waveshare-DXF: Board 18,00 × 23,50 mm, Reihenabstand 15,24 mm (6 × 2,54), Pinraster 2,54, erster Pin 1,59 mm von der USB-C-Kante. Die Bohrungen sitzen 1,38 mm innerhalb der Board-Kante, die Pads reichen bis an die Kante.
 
 Die Variante **-M** hat die Stiftleisten schon eingelötet. Die ohne -M kommt mit losen Leisten, die die Teilnehmer selbst anlöten (+18 Lötstellen). Entscheidung bei Gregor.
 
@@ -257,7 +257,7 @@ Lager, Preise und Basic/Extended am 8. Oktober 2026 live bei JLCPCB geprüft. Vo
 
 ## 9. Offene Punkte
 
-1. ESP-Board: Maße am gelieferten Board nachmessen (Abschnitt 5), Variante mit oder ohne eingelötete Leisten (-M).
+1. ESP-Board: Variante mit oder ohne eingelötete Leisten (-M). Maße stehen laut Waveshare-DXF fest (Abschnitt 5).
 2. Hülle: Akkuwiege für den Zylinder entfernen (kollidiert mit dem ESP), Halter für den Pouch-Akku im Kopf, Öffnungen für USB-C, Schalter und LED. USB-C endet ~1,25 mm hinter der Außenfläche; bei Bedarf die Wand innen ausdünnen.
 3. Schalter-Bauform (rechtwinklig/stehend, Hebellänge).
 4. Befestigung der Platine auf der Bodenplatte (H1/H2 sind frei gesetzt).

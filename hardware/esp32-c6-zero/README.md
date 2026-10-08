@@ -65,6 +65,6 @@ Aus der Waveshare-Zeichnung (mm):
 
 - Board 18,00 × 23,50, Eckenradius 1,00.
 - 9 Pins pro Seite im Raster 2,54. Erster Pin 1,59 von der Oberkante (1,59 + 8 × 2,54 + 1,59 = 23,50).
-- Die Randpins sind halbe Lötaugen an der Kante. Reihenabstand daher vermutlich **17,78 mm (7 × 2,54)**, nicht 15,24. **Vor dem Footprint am echten Board mit dem Messschieber nachmessen.**
+- Reihenabstand **15,24 mm (6 × 2,54)** laut Waveshare-DXF. Die Bohrungen sitzen 1,38 mm innerhalb der Board-Kante ((18,00 − 15,24) / 2); die Pads reichen bis an die Kante.
 - USB-C-Buchse: Maße 1,38 und 4,67 in der Zeichnung, steht oben leicht über die Kante. Lage am echten Board nachmessen.
-- Pads auf der Unterseite: erstes Pad (GPIO13) 8,79 von der Oberkante und 3,63 von der linken Kante; 7 Pads über 9,48, also Raster ca. 1,58.
+- Pads auf der Unterseite: 3,63 von der linken Kante, Raster 1,60, letztes Pad (GPIO6) 5,15 von der Unterkante.
