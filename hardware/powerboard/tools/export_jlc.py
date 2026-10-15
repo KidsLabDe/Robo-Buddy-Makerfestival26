@@ -9,6 +9,13 @@
 
 Only parts with an LCSC number end up in BOM and CPL. The THT kit parts
 (field Kit = THT-Kit) are soldered in the workshop and stay out.
+
+JLC's part models are not always oriented like KiCad's footprints. The
+rotation in the CPL is corrected per LCSC part (JLC_ROTATION), checked in
+JLC's placement viewer on 8 Oct 2026: pin 1 of every part on the footprint's
+pin-1 mark. The correction depends on the part, not only on the footprint
+(both FS8205A and DW01A are SOT-23-6, but need 180 and 270 degrees). Check
+new parts in the viewer and add them here.
 """
 import csv
 import os
@@ -23,6 +30,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gen_pcb import PCB, PROJ  # noqa: E402  (also patches KiCad's iterators for Python 3.14)
 
 OUT = os.path.join(PROJ, 'fertigung')
+
+# Degrees added to KiCad's orientation (counter-clockwise, like the CPL);
+# 270 = 90 degrees clockwise.
+JLC_ROTATION = {
+    'C15127': 180,    # AO3401A, SOT-23
+    'C908265': 180,   # FS8205A, SOT-23-6
+    'C919459': 180,   # TPS61023, SOT-563
+    'C2927799': 270,  # DW01A, SOT-23-6
+    'C2869734': 270,  # LM66100, SC-70-6
+    'C16581': 270,    # TP4056, ESOP-8
+    'C49851': 270,    # INA226, VSSOP-10
+}
 LAYERS = 'F.Cu,B.Cu,F.Paste,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts'
 
 
@@ -70,8 +89,9 @@ def assembly(board):
         w.writerow(['Designator', 'Mid X', 'Mid Y', 'Layer', 'Rotation'])
         for fp in sorted(parts, key=lambda p: str(p.GetReference())):
             p = fp.GetPosition()
+            rot = (fp.GetOrientationDegrees() + JLC_ROTATION.get(field(fp, 'LCSC'), 0)) % 360
             w.writerow([str(fp.GetReference()), f'{pcbnew.ToMM(p.x):.3f}mm', f'{-pcbnew.ToMM(p.y):.3f}mm',
-                        'Top' if fp.GetLayer() == pcbnew.F_Cu else 'Bottom', f'{fp.GetOrientationDegrees() % 360:.1f}'])
+                        'Top' if fp.GetLayer() == pcbnew.F_Cu else 'Bottom', f'{rot:.1f}'])
     return bom, cpl, len(parts), len(groups)
 
 
